@@ -10,8 +10,10 @@ Any platform that supports Qt5.2 or higher.
 
 # Build
 
-    qmake
+    qmake serial2tcp.pro CONFIG+=BUILD_DLL
     *make # depending on your build env
+    qmake serial2tcp.pro CONFIG+=BUILD_APP
+    *make # depending on your build env    
     
 # Run
 

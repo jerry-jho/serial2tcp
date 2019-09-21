@@ -14,7 +14,12 @@ int main(int argc, char *argv[])
 	parser.setApplicationDescription("A server application that redirect serial port data to tcp network");
 	parser.addHelpOption();
 	parser.addVersionOption();
-	QCommandLineOption serialPortNameOption(QStringList() << "s" << "serial-port",
+
+    QCommandLineOption serialPortListOption(QStringList() << "l" << "list",
+        QLatin1Literal("list all serial port"));
+    parser.addOption(serialPortListOption);
+
+    QCommandLineOption serialPortNameOption(QStringList() << "s" << "serial-port",
 		QLatin1Literal("select serial port <port>."),
 		QLatin1Literal("port"));
 	parser.addOption(serialPortNameOption);
@@ -31,9 +36,18 @@ int main(int argc, char *argv[])
 		QLatin1Literal("9988"));
 	parser.addOption(tcpPortOption);
 
+
 	parser.process(app);
 
 	const QStringList args = parser.positionalArguments();
+    QSerialPortInfo portInfo;
+    if (parser.isSet(serialPortListOption)) {
+        foreach(portInfo,QSerialPortInfo::availablePorts()) {
+            std::cout << qPrintable(portInfo.portName()) << "\t" << 
+                         qPrintable(portInfo.description()) << "\t" << std::endl;
+        }
+        return 0;
+    }
 
 	QString serialPortName = parser.value(serialPortNameOption);
 	QSerialPortInfo serialPortInfo = QSerialPortInfo(serialPortName);

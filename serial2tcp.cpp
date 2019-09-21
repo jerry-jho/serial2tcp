@@ -11,6 +11,14 @@ Serial2Tcp::Serial2Tcp(QSerialPortInfo info, int serialBandRate, int tcpPort, QO
 	connect(&m_tcp_server, &QTcpServer::newConnection, this, &Serial2Tcp::newConnection);
 }
 
+void print_bytearray(QByteArray a) {
+    for (int i = 0;i<a.size();i++) {
+        printf("%02X ",(unsigned char)a.at(i));
+    }
+    printf("\n");
+    std::flush(std::cout);
+}
+
 void Serial2Tcp::startSlave() {
 	m_serial.setPortName(m_serial_info.portName());
 	m_serial.setBaudRate(m_serial_baudrate);
@@ -36,24 +44,32 @@ void Serial2Tcp::startSlave() {
 
 void Serial2Tcp::serialReadRequest() {
 	if (m_socket->isOpen()) {
-		m_socket->write(m_serial.readAll());
+        printf("S->N\n");
+        std::flush(std::cout);
+        QByteArray a = m_serial.readAll();
+        print_bytearray(a);
+		m_socket->write(a);
 	}
 }
 
 void Serial2Tcp::tcpReadRequest() {
-	m_serial.write(m_socket->readAll());
+    QByteArray a = m_socket->readAll();
+    printf("N->S\n");
+    std::flush(std::cout);    
+    print_bytearray(a);
+	m_serial.write(a);
 }
 
 void Serial2Tcp::newConnection() {
 	if (m_socket->isValid()) {
 		std::cout << "[INFO] Disconnect previous tcp socket" << std::endl;
 		std::flush(std::cout);
-		m_socket->disconnectFromHost();
+		m_socket->close();
+        m_socket->deleteLater();
 	}
 	std::cout << "[INFO] New tcp socket" << std::endl;
 	std::flush(std::cout);
 	m_socket = m_tcp_server.nextPendingConnection();
-	connect(m_socket, &QAbstractSocket::disconnected,m_socket, &QObject::deleteLater);
 	connect(m_socket, &QAbstractSocket::readyRead, this, &Serial2Tcp::tcpReadRequest);
 }
 
